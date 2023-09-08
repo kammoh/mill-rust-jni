@@ -82,13 +82,13 @@ object NativeLoader {
 
   private def targetName0(): String = {
 
-    val os = toRustOS(System.getProperty("os.name").toLowerCase)
-    val arch = toRustArch(System.getProperty("os.arch"))
+    val os = toRustOS(sys.props("os.name").toLowerCase.filterNot(_.isWhitespace))
+    val arch = toRustArch(sys.props("os.arch").toLowerCase.filterNot(_.isWhitespace))
     s"$arch$os"
   }
 
   private def toRustArch(arch: String): String = {
-    if (arch.matches("^(x8664|amd64|ia32e|em64t|x64)$")) "x86_64"
+    if (arch.matches("^(x86_64|amd64|ia32e|em64t|x64)$")) "x86_64"
     else if (arch.trim == "aarch64") "aarch64"
     else arch
   }
@@ -96,7 +96,7 @@ object NativeLoader {
   private final def toRustOS(os: String): String = {
     if (os.contains("windows")) "-pc-windows-msvc"
     else if (os.contains("linux")) "-unknown-linux-gnu"
-    else if (os.startsWith("macosx") || os.startsWith("osx") || os.startsWith("darwin")) "-apple-darwin"
+    else if (os.contains("osx") || os.contains("darwin")) "-apple-darwin"
     else os
   }
 
