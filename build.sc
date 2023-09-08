@@ -28,10 +28,7 @@ object `loader-java` extends JavaModule with PublishModule {
   )
 }
 
-object loader extends mill.Cross[Loader]("2.12.18", "2.13.11", "3.3.0")
-
-trait Loader extends Cross.Module[String] with PublishModule {
-  val crossScalaVersion: String = crossValue
+object loader extends mill.Cross[Loader]("2.12.18", "2.13.11", "3.3.0") with PublishModule {
   override def publishVersion: T[String] = meta.version
 
   override def artifactName = "jni-loader"
@@ -46,17 +43,14 @@ trait Loader extends Cross.Module[String] with PublishModule {
       Developer("yankun1992", "Yan Kun", "https://github.com/yankun1992")
     )
   )
-
 }
 
-object plugin extends mill.Cross[MillPlugin](meta.millVersions)
+trait Loader extends Cross.Module[String] with CrossModuleBase {
+  override def crossScalaVersion: String = crossValue
+}
 
-trait MillPlugin extends Cross.Module[String] with CrossModuleBase with PublishModule {
-  val millVersion: String = crossValue
-
-  override def crossScalaVersion: String = "2.13.11"
-
-  override def artifactSuffix = s"_mill${meta.millBinaryVersion(millVersion)}" + super.artifactSuffix()
+object plugin extends mill.Cross[MillPlugin](meta.millVersions) with PublishModule {
+  // override def artifactSuffix = s"_mill${meta.millBinaryVersion(millVersion)}" + super.artifactSuffix()
 
   override def publishVersion = meta.version
 
@@ -74,8 +68,13 @@ trait MillPlugin extends Cross.Module[String] with CrossModuleBase with PublishM
     )
   )
 
-  override def compileIvyDeps = Agg(ivy"com.lihaoyi::mill-scalalib:$millVersion")
+  // override def compileIvyDeps = Agg(ivy"com.lihaoyi::mill-scalalib:$millVersion")
+}
 
+trait MillPlugin extends Cross.Module[String] with CrossModuleBase {
+  val millVersion: String = crossValue
+
+  override def compileIvyDeps = Agg(ivy"com.lihaoyi::mill-scalalib:$millVersion")
 
 }
 
