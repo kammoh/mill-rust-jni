@@ -110,9 +110,9 @@ trait RustJniModule extends JavaModule {
       case os if os.contains("windows") => "pc-windows-msvc"
       case os if os.contains("linux") => "unknown-linux-gnu"
       case os if (os.contains("osx") || os.contains("darwin")) => "apple-darwin"
-
+      case x => s"unknown-${x}"
     }
-    s"${arch}-{platform}"
+    s"${arch}-${platform}"
   })
 
   /**
