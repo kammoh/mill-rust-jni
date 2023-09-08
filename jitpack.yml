@@ -1,4 +1,5 @@
 jdk:
   - openjdk17
 install:
-  - ./millw -i _.publishM2Local plugin._.publishM2Local
+  - ./millw -i _.publishM2Local
+  - ./millw -i _._.publishM2Local
