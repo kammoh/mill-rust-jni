@@ -4,7 +4,7 @@ import mill._, scalalib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 
 object meta {
-  val millVersions = Seq("0.10.12", "0.11.1")
+  val millVersions = Seq("0.10.12", "0.11.2")
   val version = "0.2.4"
 
   def millBinaryVersion(millVersion: String) = scalaNativeBinaryVersion(millVersion)
@@ -30,8 +30,8 @@ object `loader-java` extends JavaModule with PublishModule {
 
 object loader extends mill.Cross[Loader]("2.12.18", "2.13.11", "3.3.0")
 
-class Loader(val crossScalaVersion: String) extends CrossScalaModule with PublishModule {
-
+trait Loader extends Cross.Module[String] with PublishModule {
+  val crossScalaVersion: String = crossValue
   override def publishVersion: T[String] = meta.version
 
   override def artifactName = "jni-loader"
@@ -49,9 +49,10 @@ class Loader(val crossScalaVersion: String) extends CrossScalaModule with Publis
 
 }
 
-object plugin extends mill.Cross[MillPlugin](meta.millVersions: _*)
+object plugin extends mill.Cross[MillPlugin](meta.millVersions)
 
-class MillPlugin(millVersion: String) extends CrossModuleBase with PublishModule {
+trait MillPlugin extends Cross.Module[String] with CrossModuleBase with PublishModule {
+  val millVersion: String = crossValue
 
   override def crossScalaVersion: String = "2.13.11"
 

@@ -100,17 +100,20 @@ trait RustJniModule extends JavaModule {
   def release: Boolean = true
 
   /** Rust build target of local computer, you can use the environment variable MILL_RUST_TARGET to set it. */
-  def localTarget: String = if (System.getenv("MILL_RUST_TARGET") != null)
-    System.getenv("MILL_RUST_TARGET") else {
-    val os = System.getProperty("os.name").toLowerCase
-    if (os.contains("windows")) "x86_64-pc-windows-msvc" else if (os.contains("linux")) "x86_64-unknown-linux-gnu"
-    else if (os.startsWith("macosx") || os.startsWith("osx") || os.startsWith("darwin")) {
-      val arch = System.getProperty("os.arch")
-      if (arch.matches("^(x8664|amd64|ia32e|em64t|x64)$")) "x86_64"
-      else if (arch.trim == "aarch64") "aarch64"
-    } + "-apple-darwin"
-    else "x86_64-pc-windows-msvc"
-  }
+  def localTarget: String = sys.env.getOrElse("MILL_RUST_TARGET", {
+    val arch = sys.props("os.arch").toLowerCase.filterNot(_.isWhitespace) match {
+      case x if x.matches("^(x86|x64|amd64|ia32e|em64t)") => "x86_64"
+      case x if x.matches("(arm64|aarch64)") => "aarch64"
+      case x => x
+    }
+    val platform = sys.props("os.name").toLowerCase.filterNot(_.isWhitespace) match {
+      case os if os.contains("windows") => "pc-windows-msvc"
+      case os if os.contains("linux") => "unknown-linux-gnu"
+      case os if (os.contains("osx") || os.contains("darwin")) => "apple-darwin"
+
+    }
+    s"${arch}-{platform}"
+  })
 
   /**
    * All support target of cargo build.
@@ -154,18 +157,13 @@ trait RustJniModule extends JavaModule {
     val crateHome = rustSourceRoot().head.path
 
     for (target <- crossTargets) {
-      if (release)
-        os.proc("cargo", "build", "--release", "--target", target).call(cwd = crateHome, env = cargoBuildEnvs)
-      else
-        os.proc("cargo", "build", "--target", target).call(cwd = crateHome, env = cargoBuildEnvs)
+      val buildType = if (release) "release" else "debug"
 
-      val mode = if (release) "release" else "debug"
+      os.proc("cargo", "build", s"--$buildType", "--target", target).call(cwd = crateHome, env = cargoBuildEnvs)
+
       val name = getNativeLibName(target, nativeName())
-
-      val from = crateHome / "target" / target / mode / name
-
+      val from = crateHome / "target" / target / buildType / name
       val to = library / target / name
-
       os.copy(from, to, replaceExisting = true, createFolders = true)
     }
 
